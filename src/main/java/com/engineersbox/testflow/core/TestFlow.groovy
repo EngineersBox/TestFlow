@@ -22,24 +22,29 @@ abstract class TestFlow implements TestFlowWorkflow {
     private Boolean retry;
     private TestStageContext testStageContext;
 
-    private ProvisioningWorkflow provisioningWorkflow;
+    private ProvisioningWorkflow<ProvisioningContext, Tuple2<UUID, UUID>> provisioningWorkflow;
     private DeprovisioningWorkflow deprovisioningWorkflow;
+    private final ProvisioningContext provisioningContext;
+    private final DeprovisioningContext deprovisioningContext;
 
     TestFlow() {
-        this.provisioningWorkflow = Workflow.newChildWorkflowStub(ProvisioningWorkflow<ProvisioningContext, Void>.class);
+        this.provisioningWorkflow = Workflow.newChildWorkflowStub(ProvisioningWorkflow<ProvisioningContext, Tuple2<UUID, UUID>>.class);
         this.deprovisioningWorkflow = Workflow.newChildWorkflowStub(DeprovisioningWorkflow<DeprovisioningContext, Void>.class);
         this.testStageContext = new TestStageContext();
+        this.provisioningContext = new ProvisioningContext();
+        this.deprovisioningContext = new DeprovisioningContext();
     }
 
     abstract List<TestStageWorkflow> provideStages();
 
     private void provision() {
         this.status = FlowState.PROVISIONING;
-        this.provisioningWorkflow.provision();
+        this.provisioningWorkflow.provision(this.provisioningContext);
     }
 
     private void deprovision() {
         this.status = FlowState.DEPROVISIONING;
+        this.deprovisioningWorkflow.deprovision(this.deprovisioningContext);
     }
 
     private void configureTestBox() {
