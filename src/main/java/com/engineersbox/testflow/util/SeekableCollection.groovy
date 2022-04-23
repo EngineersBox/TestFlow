@@ -21,6 +21,9 @@ class SeekableCollection<T> implements Iterator<T> {
 
     @Override
     T next() {
+        if (this.index >= (size() - 1)) {
+            return null;
+        }
         final T nextValue = this.inner[this.index];
         this.index++;
         return nextValue;

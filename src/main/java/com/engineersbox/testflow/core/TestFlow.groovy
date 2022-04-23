@@ -2,6 +2,8 @@ package com.engineersbox.testflow.core
 
 import com.engineersbox.testflow.provisioning.DeprovisioningWorkflow
 import com.engineersbox.testflow.provisioning.ProvisioningWorkflow
+import com.engineersbox.testflow.provisioning.context.DeprovisioningContext
+import com.engineersbox.testflow.provisioning.context.ProvisioningContext
 import com.engineersbox.testflow.stage.TestResult
 import com.engineersbox.testflow.stage.TestStageWorkflow
 import com.engineersbox.testflow.stage.context.FailureBehaviour
@@ -24,8 +26,8 @@ abstract  class TestFlow implements TestFlowWorkflow {
     private DeprovisioningWorkflow deprovisioningWorkflow;
 
     TestFlow() {
-        this.provisioningWorkflow = Workflow.newChildWorkflowStub(ProvisioningWorkflow<Void, Void>.class);
-        this.deprovisioningWorkflow = Workflow.newChildWorkflowStub(DeprovisioningWorkflow<Void, Void>.class);
+        this.provisioningWorkflow = Workflow.newChildWorkflowStub(ProvisioningWorkflow<ProvisioningContext, Void>.class);
+        this.deprovisioningWorkflow = Workflow.newChildWorkflowStub(DeprovisioningWorkflow<DeprovisioningContext, Void>.class);
         this.testStageContext = new TestStageContext();
     }
 
@@ -49,21 +51,30 @@ abstract  class TestFlow implements TestFlowWorkflow {
         TestResult testResult = TestResult.SUCCESS;
         final SeekableCollection<TestStageWorkflow> seekableStages = new SeekableCollection(provideStages());
         int retryAttempts = 0;
-        for (int i = 0; i < seekableStages.size(); i++) {
-            final TestStageWorkflow stage = (TestStageWorkflow) seekableStages[i];
+        TestStageWorkflow stage;
+        testStageIterator: while ((stage = (TestStageWorkflow) seekableStages.next()) != null) {
             final FailureBehaviour failureBehaviour = this.testStageContext.getFailureBehaviour();
             final TestResult currentResult = stage.execute(this.testStageContext);
             if (currentResult == TestResult.SUCCESS) {
+                retryAttempts = 0;
                 continue;
             }
             this.status = FlowState.TEST_FAILURE;
             if (this.testStageContext.shouldRetry() && retryAttempts < MAX_RETRIES) {
-                
+                retryAttempts++;
+                seekableStages.seekRelative(-1);
+                continue;
             }
             switch (failureBehaviour) {
-                case
+                case FailureBehaviour.EXIT:
+                    testResult = currentResult;
+                    break testStageIterator;
+                case FailureBehaviour.SKIP:
+                    retryAttempts = 0;
+                    break;
             }
         }
+        return testResult;
     }
 
     private boolean shouldRetry() {
@@ -76,7 +87,7 @@ abstract  class TestFlow implements TestFlowWorkflow {
     }
 
     @Override
-    FlowState invokeTestFlow() {
+    final FlowState invokeTestFlow() {
         this.status = FlowState.RUNNING;
 
         // TODO: Provision
@@ -94,17 +105,17 @@ abstract  class TestFlow implements TestFlowWorkflow {
     }
 
     @Override
-    FlowState getStatus() {
+    final FlowState getStatus() {
         return this.status
     }
 
     @Override
-    void retryStage() {
+    final void retryStage() {
         this.retry = true;
     }
 
     @Override
-    void abort() {
+    final void abort() {
 
     }
 }
