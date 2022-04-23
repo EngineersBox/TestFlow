@@ -13,7 +13,7 @@ import com.uber.cadence.workflow.Workflow
 
 import java.time.Duration
 
-abstract  class TestFlow implements TestFlowWorkflow {
+abstract class TestFlow implements TestFlowWorkflow {
 
     private static final int MAX_RETRIES = 10;
     private static final Duration SIGNAL_WAIT_TIMEOUT = Duration.ofSeconds(10L);
