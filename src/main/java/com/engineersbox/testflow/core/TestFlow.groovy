@@ -23,13 +23,13 @@ abstract class TestFlow implements TestFlowWorkflow {
     private TestStageContext testStageContext;
 
     private ProvisioningWorkflow<ProvisioningContext, Tuple2<UUID, UUID>> provisioningWorkflow;
-    private DeprovisioningWorkflow deprovisioningWorkflow;
+    private DeprovisioningWorkflow<DeprovisioningContext, Boolean> deprovisioningWorkflow;
     private final ProvisioningContext provisioningContext;
     private final DeprovisioningContext deprovisioningContext;
 
     TestFlow() {
         this.provisioningWorkflow = Workflow.newChildWorkflowStub(ProvisioningWorkflow<ProvisioningContext, Tuple2<UUID, UUID>>.class);
-        this.deprovisioningWorkflow = Workflow.newChildWorkflowStub(DeprovisioningWorkflow<DeprovisioningContext, Void>.class);
+        this.deprovisioningWorkflow = Workflow.newChildWorkflowStub(DeprovisioningWorkflow<DeprovisioningContext, Boolean>.class);
         this.testStageContext = new TestStageContext();
         this.provisioningContext = new ProvisioningContext();
         this.deprovisioningContext = new DeprovisioningContext();
@@ -39,16 +39,31 @@ abstract class TestFlow implements TestFlowWorkflow {
 
     private void provision() {
         this.status = FlowState.PROVISIONING;
-        this.provisioningWorkflow.provision(this.provisioningContext);
+        final Tuple2<UUID, UUID> result = this.provisioningWorkflow.provision(this.provisioningContext);
+        if (result == null) {
+            this.status = FlowState.FAILED;
+        }
     }
 
     private void deprovision() {
         this.status = FlowState.DEPROVISIONING;
-        this.deprovisioningWorkflow.deprovision(this.deprovisioningContext);
+        final Boolean result = this.deprovisioningWorkflow.deprovision(this.deprovisioningContext);
+        if (Boolean.TRUE != result) {
+            this.status = FlowState.FAILED;
+        }
     }
 
     private void configureTestBox() {
         this.status = FlowState.CONFIGURING_TEST_PLATFORM;
+    }
+
+    private boolean shouldRetry() {
+        final FlowState previousState = this.status;
+        this.status = FlowState.WAITING_FOR_SIGNAL;
+        final boolean result = Workflow.await(SIGNAL_WAIT_TIMEOUT, { -> this.retry })
+        this.retry = null;
+        this.status = previousState;
+        return result;
     }
 
     private TestResult executeTests() {
@@ -65,7 +80,7 @@ abstract class TestFlow implements TestFlowWorkflow {
                 continue;
             }
             this.status = FlowState.TEST_FAILURE;
-            if (this.testStageContext.shouldRetry() && retryAttempts < MAX_RETRIES) {
+            if (this.testStageContext.shouldRetry() && retryAttempts < MAX_RETRIES && shouldRetry()) {
                 retryAttempts++;
                 seekableStages.seekRelative(-1);
                 continue;
@@ -82,29 +97,22 @@ abstract class TestFlow implements TestFlowWorkflow {
         return testResult;
     }
 
-    private boolean shouldRetry() {
-        final FlowState previousState = this.status;
-        this.status = FlowState.WAITING_FOR_SIGNAL;
-        final boolean result = Workflow.await(SIGNAL_WAIT_TIMEOUT, { -> this.retry })
-        this.retry = null;
-        this.status = previousState;
-        return result;
-    }
-
     @Override
     final FlowState invokeTestFlow() {
         this.status = FlowState.RUNNING;
 
-        // TODO: Provision
         provision();
+        if (this.status == FlowState.FAILED) {
+            return this.status;
+        }
 
-        // TODO: Configure testing box
         configureTestBox();
+        if (this.status == FlowState.FAILED) {
+            return this.status;
+        }
 
-        // TODO: Run test stages
         final TestResult testResult = executeTests();
 
-        // TODO: Deprovision
         deprovision();
         return this.status;
     }

@@ -8,6 +8,7 @@ class ProvisioningContext {
     String terraformFile
     Map<String, ?> tfVars;
     AWSConfig awsConfig;
+    def context;
 
     // Target cluster
     String clusterConfig;

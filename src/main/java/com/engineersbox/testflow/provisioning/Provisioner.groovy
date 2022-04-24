@@ -41,8 +41,8 @@ class Provisioner implements ProvisioningWorkflow<ProvisioningContext, Tuple2<UU
     Tuple2<UUID, UUID> provision(final ProvisioningContext provisioningContext) {
         try {
             final List<UUID> results = Promise.allOf([
-                    provisionTargetCluster(null),
-                    provisionTestPlatformBox(null, null),
+                    provisionTargetCluster(provisioningContext.getApiConfig()),
+                    provisionTestPlatformBox(provisioningContext.getContext(), null),
             ]).get();
             return new Tuple2<>(results[0], results[1]);
         } catch (final Exception ignored) {
