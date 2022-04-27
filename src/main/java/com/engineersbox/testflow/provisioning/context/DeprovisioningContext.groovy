@@ -5,5 +5,6 @@ import com.engineersbox.testflow.config.APIConfig
 class DeprovisioningContext {
     def context;
     APIConfig apiConfig;
-    String clusterId;
+    UUID clusterId;
+    UUID tfResourceId;
 }

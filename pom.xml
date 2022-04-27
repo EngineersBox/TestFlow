@@ -10,18 +10,18 @@
 	<name>TestFlow Framework</name>
 
     <properties>
-        <groovy.version>3.0.10</groovy.version>
+        <groovy.version>4.0.2</groovy.version>
         <cadence.version>3.6.1</cadence.version>
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
             <version>${groovy.version}</version>
-            <type>pom</type>
         </dependency>
+
         <dependency>
             <groupId>com.uber.cadence</groupId>
             <artifactId>cadence-client</artifactId>
