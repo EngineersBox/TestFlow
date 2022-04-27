@@ -1,5 +1,6 @@
 package com.engineersbox.testflow.core
 
+import com.engineersbox.testflow.config.Config
 import com.engineersbox.testflow.provisioning.DeprovisioningWorkflow
 import com.engineersbox.testflow.provisioning.ProvisioningWorkflow
 import com.engineersbox.testflow.provisioning.context.DeprovisioningContext
@@ -26,6 +27,8 @@ abstract class TestFlow implements TestFlowWorkflow {
     private DeprovisioningWorkflow<DeprovisioningContext, Boolean> deprovisioningWorkflow;
     private final ProvisioningContext provisioningContext;
     private final DeprovisioningContext deprovisioningContext;
+    
+    private final Config config;
 
     TestFlow() {
         this.provisioningWorkflow = Workflow.newChildWorkflowStub(ProvisioningWorkflow<ProvisioningContext, Tuple2<UUID, UUID>>.class);
@@ -33,6 +36,7 @@ abstract class TestFlow implements TestFlowWorkflow {
         this.testStageContext = new TestStageContext();
         this.provisioningContext = new ProvisioningContext();
         this.deprovisioningContext = new DeprovisioningContext();
+        this.config = Config.fromResources();
     }
 
     abstract List<TestStageWorkflow> provideStages();

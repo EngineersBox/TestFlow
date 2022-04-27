@@ -1,0 +1,27 @@
+{
+	"bundles": [
+		{
+			"bundle": "OPENSEARCH",
+			"options": {
+				"clientEncryption": "true",
+				"dedicatedMasterNodes": "true",
+				"indexManagementPlugin": "false",
+				"masterNodeSize": "SRH-DM-m5d.large",
+				"securityPlugin": "true"
+			},
+			"version": "opensearch:1.2.4"
+		}
+	],
+	"clusterName": "opensearch_target_cluster",
+	"clusterNetwork": "192.168.0.0/18",
+	"dataCentre": "US_WEST_1",
+	"nodeSize": "m5l-250-v2",
+	"provider": {
+		"name": "AWS_VPC"
+	},
+	"rackAllocation": {
+		"nodesPerRack": 1,
+		"numberOfRacks": 3
+	},
+	"slaTier": "PRODUCTION"
+}
