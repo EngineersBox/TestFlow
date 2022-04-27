@@ -16,9 +16,9 @@ class Config {
     @JsonProperty("cluster")
     TargetClusterConfig cluster;
 
-    static Config fromResources() {
+    static Config fromResources(final String path) {
         final Properties properties = new Properties()
-        final  File propertiesFile = new File("configuration.properties")
+        final  File propertiesFile = new File(path)
         propertiesFile.withInputStream {
             properties.load(it)
         };

@@ -27,7 +27,7 @@ abstract class TestFlow implements TestFlowWorkflow {
     private DeprovisioningWorkflow<DeprovisioningContext, Boolean> deprovisioningWorkflow;
     private final ProvisioningContext provisioningContext;
     private final DeprovisioningContext deprovisioningContext;
-    
+
     private final Config config;
 
     TestFlow() {
@@ -36,7 +36,7 @@ abstract class TestFlow implements TestFlowWorkflow {
         this.testStageContext = new TestStageContext();
         this.provisioningContext = new ProvisioningContext();
         this.deprovisioningContext = new DeprovisioningContext();
-        this.config = Config.fromResources();
+        this.config = Config.fromResources("configuration.properties");
     }
 
     abstract List<TestStageWorkflow> provideStages();
